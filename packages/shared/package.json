@@ -1,0 +1,16 @@
+{
+  "name": "@rendered-fits/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for Rendered Fits",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}

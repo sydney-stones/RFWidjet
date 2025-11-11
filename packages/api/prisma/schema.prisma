@@ -1,0 +1,324 @@
+// Rendered Fits Database Schema
+// PostgreSQL with Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum SubscriptionPlan {
+  ATELIER  // Starter: $99/mo, 500 try-ons
+  MAISON   // Professional: $299/mo, 2000 try-ons
+  COUTURE  // Enterprise: $999/mo, unlimited
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIAL
+  PAST_DUE
+  CANCELED
+  SUSPENDED
+}
+
+enum AnalyticsEventType {
+  TRY_ON_STARTED
+  TRY_ON_COMPLETED
+  TRY_ON_FAILED
+  PRODUCT_ADDED
+  PRODUCT_REMOVED
+  CONVERSION
+  REFUND
+  WIDGET_LOADED
+  API_KEY_CREATED
+  API_KEY_REVOKED
+}
+
+enum ProductCategory {
+  TOPS
+  BOTTOMS
+  DRESSES
+  OUTERWEAR
+  SHOES
+  ACCESSORIES
+  ACTIVEWEAR
+  SWIMWEAR
+  FORMAL
+  CASUAL
+  OTHER
+}
+
+// ============================================================================
+// CORE ENTITIES
+// ============================================================================
+
+model Merchant {
+  id                 String             @id @default(cuid())
+  email              String             @unique
+  password           String // hashed with bcrypt
+  businessName       String
+  apiKey             String             @unique
+
+  // Subscription details
+  plan               SubscriptionPlan   @default(ATELIER)
+  subscriptionStatus SubscriptionStatus @default(TRIAL)
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
+
+  // Business info
+  website            String?
+  logoUrl            String?
+  contactName        String?
+  phone              String?
+
+  // Billing
+  stripeCustomerId   String?            @unique
+  billingEmail       String?
+
+  // Settings
+  webhookUrl         String?
+  webhookSecret      String?
+  allowedDomains     String[] // CORS whitelist
+
+  // Metadata
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  lastLoginAt        DateTime?
+
+  // Relations
+  products           Product[]
+  tryOns             TryOn[]
+  usageTracking      UsageTracking[]
+  analyticsEvents    AnalyticsEvent[]
+
+  @@map("merchants")
+  @@index([apiKey])
+  @@index([email])
+  @@index([subscriptionStatus])
+  @@index([createdAt])
+}
+
+model Product {
+  id           String          @id @default(cuid())
+  merchantId   String
+  externalId   String // ID from merchant's e-commerce platform
+
+  // Product details
+  name         String
+  description  String?
+  imageUrl     String
+  price        Decimal         @db.Decimal(10, 2)
+  currency     String          @default("USD")
+  category     ProductCategory @default(OTHER)
+  sku          String?
+
+  // Metadata
+  metadata     Json? // Additional data from e-commerce platform
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  // Relations
+  merchant     Merchant        @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+  tryOns       TryOn[]
+
+  @@unique([merchantId, externalId]) // Prevent duplicate imports
+  @@map("products")
+  @@index([merchantId])
+  @@index([merchantId, isActive])
+  @@index([category])
+  @@index([createdAt])
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+
+  // Identity (optional for privacy)
+  email        String?
+  anonymousId  String?   @unique // For tracking without email
+
+  // Profile
+  photoUrl     String? // Their uploaded photo (if saved)
+  bodyProfile  Json? // Measurements: { height, weight, chestSize, waistSize, etc. }
+  preferences  Json? // Style preferences, favorite colors, etc.
+
+  // Activity
+  lastSeen     DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  tryOns       TryOn[]
+
+  @@map("customers")
+  @@index([email])
+  @@index([anonymousId])
+  @@index([lastSeen])
+}
+
+model TryOn {
+  id               String    @id @default(cuid())
+
+  // Core data
+  customerId       String
+  productId        String
+  merchantId       String
+
+  // Images
+  inputImageUrl    String // Customer's photo
+  outputImageUrl   String // AI-generated result
+
+  // Metadata
+  processingTimeMs Int // Time taken to generate
+  geminiModelUsed  String    @default("gemini-2.5-flash")
+
+  // Business metrics
+  converted        Boolean   @default(false) // Did they buy?
+  returnedFlag     Boolean   @default(false) // Did they return?
+  purchaseAmount   Decimal?  @db.Decimal(10, 2)
+
+  // Quality metrics
+  userRating       Int? // 1-5 stars
+  userFeedback     String?
+
+  // Timestamps
+  generatedAt      DateTime  @default(now())
+  convertedAt      DateTime?
+
+  // Relations
+  customer         Customer  @relation(fields: [customerId], references: [id])
+  product          Product   @relation(fields: [productId], references: [id])
+  merchant         Merchant  @relation(fields: [merchantId], references: [id])
+
+  @@map("try_ons")
+  @@index([customerId])
+  @@index([productId])
+  @@index([merchantId])
+  @@index([merchantId, generatedAt])
+  @@index([merchantId, converted])
+  @@index([generatedAt])
+}
+
+model UsageTracking {
+  id             String   @id @default(cuid())
+  merchantId     String
+
+  // Billing period
+  month          String // Format: "2024-01" for January 2024
+  year           Int
+  monthNumber    Int // 1-12
+
+  // Usage stats
+  tryonCount     Int      @default(0)
+  includedTryons Int // Based on plan
+  overageTryons  Int      @default(0) // Tryons beyond plan limit
+  overageCharges Decimal  @default(0) @db.Decimal(10, 2)
+
+  // Calculated totals
+  totalCharges   Decimal  @default(0) @db.Decimal(10, 2)
+
+  // Metadata
+  billedAt       DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  merchant       Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, month])
+  @@map("usage_tracking")
+  @@index([merchantId])
+  @@index([merchantId, year, monthNumber])
+  @@index([month])
+}
+
+model AnalyticsEvent {
+  id         String              @id @default(cuid())
+  merchantId String
+
+  // Event details
+  eventType  AnalyticsEventType
+  eventData  Json // Flexible data for different event types
+
+  // Context
+  ipAddress  String?
+  userAgent  String?
+  sessionId  String?
+
+  // Timestamp
+  timestamp  DateTime            @default(now())
+
+  // Relations
+  merchant   Merchant            @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("analytics_events")
+  @@index([merchantId])
+  @@index([merchantId, eventType])
+  @@index([merchantId, timestamp])
+  @@index([timestamp])
+}
+
+// ============================================================================
+// ADDITIONAL UTILITY MODELS
+// ============================================================================
+
+model ApiLog {
+  id             String   @id @default(cuid())
+  merchantId     String?
+
+  // Request details
+  method         String
+  endpoint       String
+  statusCode     Int
+  responseTimeMs Int
+
+  // Request metadata
+  ipAddress      String?
+  userAgent      String?
+  apiKey         String?
+
+  // Error tracking
+  errorMessage   String?
+  errorStack     String?
+
+  // Timestamp
+  timestamp      DateTime @default(now())
+
+  @@map("api_logs")
+  @@index([merchantId])
+  @@index([merchantId, timestamp])
+  @@index([statusCode])
+  @@index([timestamp])
+}
+
+model Webhook {
+  id            String   @id @default(cuid())
+  merchantId    String
+
+  // Event details
+  eventType     String
+  payload       Json
+
+  // Delivery status
+  delivered     Boolean  @default(false)
+  attempts      Int      @default(0)
+  lastAttemptAt DateTime?
+  responseCode  Int?
+  errorMessage  String?
+
+  // Timestamps
+  createdAt     DateTime @default(now())
+  deliveredAt   DateTime?
+
+  @@map("webhooks")
+  @@index([merchantId])
+  @@index([merchantId, delivered])
+  @@index([createdAt])
+}

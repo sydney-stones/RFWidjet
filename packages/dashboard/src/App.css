@@ -1,0 +1,47 @@
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #1a1a2e;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar h1 {
+  font-size: 20px;
+  margin-bottom: 30px;
+  color: #fff;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  margin-bottom: 10px;
+}
+
+.sidebar a {
+  display: block;
+  padding: 12px 15px;
+  color: #ccc;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: background-color 0.3s;
+}
+
+.sidebar a:hover {
+  background-color: #16213e;
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  padding: 40px;
+  background-color: #f5f5f5;
+}
