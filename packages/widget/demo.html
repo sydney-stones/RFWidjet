@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rendered Fits Widget Demo - Product Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f9fafb;
+      color: #111827;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    header {
+      background: white;
+      border-bottom: 1px solid #e5e7eb;
+      padding: 20px 0;
+      margin-bottom: 40px;
+    }
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #7c3aed;
+    }
+
+    .nav {
+      display: flex;
+      gap: 30px;
+    }
+
+    .nav a {
+      color: #6b7280;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    .nav a:hover {
+      color: #111827;
+    }
+
+    .product-page {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-images {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .main-image {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      border-radius: 12px;
+      background: #f3f4f6;
+    }
+
+    .thumbnail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .thumbnail {
+      aspect-ratio: 1;
+      object-fit: cover;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .thumbnail:hover {
+      border-color: #7c3aed;
+    }
+
+    .product-info {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .product-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1.2;
+    }
+
+    .product-price {
+      font-size: 28px;
+      font-weight: 600;
+      color: #7c3aed;
+    }
+
+    .product-rating {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stars {
+      color: #fbbf24;
+      font-size: 18px;
+    }
+
+    .rating-count {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    .product-description {
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.8;
+      padding: 20px 0;
+      border-top: 1px solid #e5e7eb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .size-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .size-label {
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .size-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .size-option {
+      padding: 12px 20px;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+      background: white;
+    }
+
+    .size-option:hover {
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+
+    .size-option.selected {
+      border-color: #7c3aed;
+      background: #f3e8ff;
+      color: #7c3aed;
+    }
+
+    .quantity-selector {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .quantity-label {
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      border: 2px solid #d1d5db;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .quantity-btn {
+      padding: 8px 16px;
+      background: white;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      color: #6b7280;
+      transition: background 0.2s;
+    }
+
+    .quantity-btn:hover {
+      background: #f3f4f6;
+    }
+
+    .quantity-value {
+      padding: 8px 20px;
+      font-weight: 600;
+      border-left: 1px solid #d1d5db;
+      border-right: 1px solid #d1d5db;
+    }
+
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .btn-add-to-cart {
+      padding: 16px 32px;
+      background: #111827;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .btn-add-to-cart:hover {
+      background: #374151;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .wishlist-btn {
+      padding: 12px 24px;
+      background: white;
+      color: #6b7280;
+      border: 2px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .wishlist-btn:hover {
+      border-color: #7c3aed;
+      color: #7c3aed;
+    }
+
+    .product-features {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px 0;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: #6b7280;
+    }
+
+    .feature-icon {
+      color: #10b981;
+      font-size: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .product-page {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 20px;
+      }
+
+      .product-title {
+        font-size: 24px;
+      }
+
+      .product-price {
+        font-size: 22px;
+      }
+    }
+
+    .demo-notice {
+      background: #fef3c7;
+      border: 2px solid #fbbf24;
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 30px;
+      display: flex;
+      align-items: start;
+      gap: 12px;
+    }
+
+    .demo-notice-icon {
+      font-size: 24px;
+    }
+
+    .demo-notice-content h4 {
+      margin: 0 0 4px 0;
+      color: #92400e;
+      font-size: 16px;
+    }
+
+    .demo-notice-content p {
+      margin: 0;
+      color: #78350f;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-content">
+      <div class="logo">LUXE BOUTIQUE</div>
+      <nav class="nav">
+        <a href="#">Shop</a>
+        <a href="#">Collections</a>
+        <a href="#">About</a>
+        <a href="#">Contact</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <!-- Demo Notice -->
+    <div class="demo-notice">
+      <div class="demo-notice-icon">💡</div>
+      <div class="demo-notice-content">
+        <h4>Widget Demo</h4>
+        <p>This is a demo product page. Click the "Try On Me" button below to test the virtual try-on widget. Make sure the API server is running on localhost:3001.</p>
+      </div>
+    </div>
+
+    <!-- Product Page -->
+    <div class="product-page">
+      <!-- Product Images -->
+      <div class="product-images">
+        <img
+          src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&h=800&fit=crop"
+          alt="Elegant Silk Evening Dress"
+          class="main-image"
+          id="mainImage"
+        >
+        <div class="thumbnail-grid">
+          <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=150&h=150&fit=crop" class="thumbnail" alt="View 1">
+          <img src="https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=150&h=150&fit=crop" class="thumbnail" alt="View 2">
+          <img src="https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=150&h=150&fit=crop" class="thumbnail" alt="View 3">
+          <img src="https://images.unsplash.com/photo-1596783074918-c84cb06531ca?w=150&h=150&fit=crop" class="thumbnail" alt="View 4">
+        </div>
+      </div>
+
+      <!-- Product Info -->
+      <div class="product-info">
+        <h1 class="product-title">Elegant Silk Evening Dress</h1>
+
+        <div class="product-rating">
+          <span class="stars">★★★★★</span>
+          <span class="rating-count">(127 reviews)</span>
+        </div>
+
+        <div class="product-price">$299.99</div>
+
+        <p class="product-description">
+          Step into elegance with this stunning silk evening dress. Crafted from premium mulberry silk,
+          this dress features a flattering A-line silhouette that drapes beautifully. Perfect for
+          formal events, weddings, or upscale gatherings. The luxurious fabric feels incredible
+          against your skin while the timeless design ensures you'll look stunning.
+        </p>
+
+        <!-- Size Selector -->
+        <div class="size-selector">
+          <div class="size-label">Select Size</div>
+          <div class="size-options">
+            <button class="size-option">XS</button>
+            <button class="size-option selected">S</button>
+            <button class="size-option">M</button>
+            <button class="size-option">L</button>
+            <button class="size-option">XL</button>
+          </div>
+        </div>
+
+        <!-- Quantity Selector -->
+        <div class="quantity-selector">
+          <div class="quantity-label">Quantity</div>
+          <div class="quantity-controls">
+            <button class="quantity-btn" onclick="changeQuantity(-1)">-</button>
+            <div class="quantity-value" id="quantity">1</div>
+            <button class="quantity-btn" onclick="changeQuantity(1)">+</button>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <!-- The widget will inject the "Try On Me" button here (before Add to Cart) -->
+          <button class="btn-add-to-cart" name="add" onclick="addToCart()">
+            Add to Cart
+          </button>
+          <button class="wishlist-btn">
+            <span>♥</span>
+            <span>Add to Wishlist</span>
+          </button>
+        </div>
+
+        <!-- Product Features -->
+        <div class="product-features">
+          <div class="feature">
+            <span class="feature-icon">✓</span>
+            <span>100% Premium Mulberry Silk</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✓</span>
+            <span>Free Shipping & Returns</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✓</span>
+            <span>Handcrafted with Care</span>
+          </div>
+          <div class="feature">
+            <span class="feature-icon">✓</span>
+            <span>Sustainable & Ethical</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load the widget -->
+  <script src="dist/widget.min.js"></script>
+
+  <script>
+    // Initialize the widget
+    RenderedFits.init({
+      apiKey: 'rfts_test_key_12345',  // Replace with your actual API key
+      productId: 'clxprod123',         // Replace with your product ID
+      baseUrl: 'http://localhost:3001',
+      buttonOptions: {
+        label: '👗 Try On Me',
+        position: 'before-add-to-cart',
+        style: 'primary'
+      },
+      onSuccess: (result) => {
+        console.log('Try-on generated successfully:', result)
+        // Track analytics, show notification, etc.
+      },
+      onError: (error) => {
+        console.error('Try-on failed:', error)
+      },
+      onAddToCart: () => {
+        console.log('Add to cart clicked from widget')
+        addToCart()
+      }
+    })
+
+    // Demo page interactions
+    function changeQuantity(delta) {
+      const quantityEl = document.getElementById('quantity')
+      let current = parseInt(quantityEl.textContent)
+      current = Math.max(1, current + delta)
+      quantityEl.textContent = current
+    }
+
+    function addToCart() {
+      alert('Product added to cart!\n\nIn a real store, this would add the item to your shopping cart.')
+    }
+
+    // Size selector
+    document.querySelectorAll('.size-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.size-option').forEach(b => b.classList.remove('selected'))
+        btn.classList.add('selected')
+      })
+    })
+
+    // Thumbnail click
+    document.querySelectorAll('.thumbnail').forEach(thumb => {
+      thumb.addEventListener('click', () => {
+        document.getElementById('mainImage').src = thumb.src.replace('w=150&h=150', 'w=600&h=800')
+      })
+    })
+  </script>
+</body>
+</html>
