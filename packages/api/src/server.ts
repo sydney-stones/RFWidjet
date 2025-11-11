@@ -10,6 +10,7 @@ import { notFoundHandler } from './middleware/errorHandler.js'
 // Routes
 import authRoutes from './routes/auth.js'
 import tryonRoutes from './routes/tryons.js'
+import tryonV1Routes from './routes/tryons-v1.js'
 import productRoutes from './routes/products.js'
 import analyticsRoutes from './routes/analytics.js'
 import webhookRoutes from './routes/webhooks.js'
@@ -82,6 +83,7 @@ app.get('/', (req, res) => {
 
 app.use('/api/auth', authRoutes)
 app.use('/api/tryons', tryonRoutes)
+app.use('/api/v1/tryons', tryonV1Routes)
 app.use('/api/products', productRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/webhooks', webhookRoutes)
@@ -112,6 +114,7 @@ const server = app.listen(PORT, () => {
   console.log(`   GET  /health - Health check`)
   console.log(`   POST /api/auth/register - Register merchant`)
   console.log(`   POST /api/auth/login - Login merchant`)
+  console.log(`   POST /api/v1/tryons/generate - Create virtual try-on (v1)`)
   console.log(`   POST /api/tryons - Create try-on`)
   console.log(`   GET  /api/products - List products`)
   console.log(`   GET  /api/analytics/stats - Dashboard stats`)

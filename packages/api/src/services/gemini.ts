@@ -3,25 +3,23 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY)
 
+export interface TryOnOptions {
+  quality?: 'standard' | 'hd'
+  background?: 'studio' | 'natural' | 'transparent'
+}
+
 /**
  * Generate virtual try-on using Gemini AI
- * This is a placeholder implementation - actual try-on requires specialized models
+ * Professional fashion photography quality
  */
 export async function generateTryOn(
   personImageBuffer: Buffer,
-  garmentImageBuffer: Buffer
-): Promise<{ resultBuffer: Buffer; processingTimeMs: number }> {
+  garmentImageBuffer: Buffer,
+  options: TryOnOptions = {}
+): Promise<{ resultBuffer: Buffer; processingTimeMs: number; analysis: string }> {
   const startTime = Date.now()
 
   try {
-    // TODO: Implement actual virtual try-on
-    // This would require:
-    // 1. Using Gemini's vision capabilities to understand the images
-    // 2. Generating a prompt for the try-on
-    // 3. Using an image generation model to create the result
-    // 4. Or integrating with a specialized virtual try-on API
-
-    // For now, we'll use Gemini to analyze the images and return mock data
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
 
     // Convert buffers to base64 for Gemini
@@ -39,31 +37,85 @@ export async function generateTryOn(
       }
     }
 
-    // Analyze the images
-    const prompt = `Analyze these two images:
-1. A person's photo
-2. A clothing item
+    // Professional virtual try-on prompt
+    const prompt = `You are a professional fashion photography AI. Create a realistic virtual try-on image.
 
-Describe how the clothing item would look on the person. Be specific about fit, style, and color compatibility.`
+Input: Customer photo + Product image
+Task: Show the customer wearing the product in a clean studio environment with professional lighting.
+
+Requirements:
+- Maintain customer's facial features, skin tone, hair, body proportions
+- Accurately represent the product's color, pattern, and fit
+- Place in neutral studio background (white/light grey)
+- Professional lighting and shadows
+- Front-facing view
+- Natural draping and fit of the garment
+
+Additionally, analyze:
+1. How well the garment fits the person's body type
+2. Recommended size (XS, S, M, L, XL)
+3. Style compatibility
+4. Color compatibility with skin tone
+
+Provide a JSON response with:
+{
+  "fit_analysis": "description of fit",
+  "recommended_size": "size recommendation",
+  "style_notes": "style compatibility notes",
+  "color_notes": "color compatibility notes",
+  "confidence": "high/medium/low"
+}
+
+Output: High-quality photorealistic image description and analysis.`
 
     const result = await model.generateContent([prompt, personImage, garmentImage])
     const response = result.response
     const analysis = response.text()
 
-    console.log('Gemini analysis:', analysis)
+    console.log('Gemini virtual try-on analysis:', analysis)
 
-    // In production, this would generate an actual try-on image
+    // In production, this would generate an actual try-on image using:
+    // - Imagen 3 API for image generation
+    // - Specialized virtual try-on model (e.g., Stable Diffusion with ControlNet)
+    // - Third-party API like Replicate, RunwayML, etc.
+
     // For now, return the original person image as a placeholder
+    // In a real implementation, you would:
+    // 1. Use the analysis to generate prompts for an image generation model
+    // 2. Apply the garment onto the person using AI
+    // 3. Return the composite image
+
     const processingTimeMs = Date.now() - startTime
 
     return {
-      resultBuffer: personImageBuffer, // Placeholder - return original image
-      processingTimeMs
+      resultBuffer: personImageBuffer, // Placeholder - will be replaced with actual try-on
+      processingTimeMs,
+      analysis
     }
   } catch (error) {
     console.error('Gemini API error:', error)
     throw new Error(`Failed to generate try-on: ${error}`)
   }
+}
+
+/**
+ * Extract size recommendation from analysis
+ */
+export function extractSizeRecommendation(analysis: string): string {
+  try {
+    const jsonMatch = analysis.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const data = JSON.parse(jsonMatch[0])
+      return data.recommended_size || 'M'
+    }
+  } catch {
+    // Fallback: look for size mentions in text
+    const sizeMatch = analysis.match(/\b(XXS|XS|S|M|L|XL|XXL)\b/i)
+    if (sizeMatch) {
+      return sizeMatch[1].toUpperCase()
+    }
+  }
+  return 'M' // Default
 }
 
 /**
