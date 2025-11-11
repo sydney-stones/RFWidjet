@@ -1,24 +1,102 @@
 version: '3.8'
 
 services:
+  # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
-    container_name: rendered-fits-db
+    container_name: renderedfits-postgres
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: rendered_fits
+      POSTGRES_DB: renderedfits
+      POSTGRES_USER: renderedfits
+      POSTGRES_PASSWORD: renderedfits_dev_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ["CMD-SHELL", "pg_isready -U renderedfits"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # Redis (for caching)
+  redis:
+    image: redis:7-alpine
+    container_name: renderedfits-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # API Service
+  api:
+    build:
+      context: .
+      dockerfile: packages/api/Dockerfile
+    container_name: renderedfits-api
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DATABASE_URL: postgresql://renderedfits:renderedfits_dev_password@postgres:5432/renderedfits
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev_jwt_secret_change_in_production
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      SHOPIFY_API_KEY: ${SHOPIFY_API_KEY}
+      SHOPIFY_API_SECRET: ${SHOPIFY_API_SECRET}
+      APP_URL: http://localhost:3001
+      WIDGET_CDN_URL: http://localhost:8081/widget.min.js
+      CORS_ORIGIN: http://localhost:5173
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./packages/api/src:/app/packages/api/src
+      - ./prisma:/app/prisma
+
+  # Dashboard (Development)
+  dashboard:
+    build:
+      context: .
+      dockerfile: packages/dashboard/Dockerfile
+    container_name: renderedfits-dashboard
+    restart: unless-stopped
+    ports:
+      - "5173:8080"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    depends_on:
+      - api
+
+  # Widget CDN
+  widget:
+    build:
+      context: .
+      dockerfile: packages/widget/Dockerfile
+    container_name: renderedfits-widget
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    depends_on:
+      - api
+
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local
