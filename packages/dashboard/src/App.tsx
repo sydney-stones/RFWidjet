@@ -1,36 +1,28 @@
-import { Routes, Route, Link } from 'react-router-dom'
-import Dashboard from './pages/Dashboard'
-import ApiKeys from './pages/ApiKeys'
-import Analytics from './pages/Analytics'
-import './App.css'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import { Layout } from './components/Layout'
+import { Login } from './pages/Login'
+import { Overview } from './pages/Overview'
+import { Products } from './pages/Products'
+import { Settings } from './pages/Settings'
+import { Billing } from './pages/Billing'
+import { useAuth } from './hooks/useAuth'
 
-function App() {
+export default function App() {
+  const { isAuthenticated } = useAuth()
+
+  if (!isAuthenticated) {
+    return <Login />
+  }
+
   return (
-    <div className="app">
-      <nav className="sidebar">
-        <h1>Rendered Fits</h1>
-        <ul>
-          <li>
-            <Link to="/">Dashboard</Link>
-          </li>
-          <li>
-            <Link to="/api-keys">API Keys</Link>
-          </li>
-          <li>
-            <Link to="/analytics">Analytics</Link>
-          </li>
-        </ul>
-      </nav>
-
-      <main className="main-content">
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/api-keys" element={<ApiKeys />} />
-          <Route path="/analytics" element={<Analytics />} />
-        </Routes>
-      </main>
-    </div>
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/overview" replace />} />
+        <Route path="/overview" element={<Overview />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/billing" element={<Billing />} />
+      </Routes>
+    </Layout>
   )
 }
-
-export default App
