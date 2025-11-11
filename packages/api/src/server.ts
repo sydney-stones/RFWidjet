@@ -16,6 +16,8 @@ import analyticsRoutes from './routes/analytics.js'
 import analyticsV1Routes from './routes/analytics-v1.js'
 import webhookRoutes from './routes/webhooks.js'
 import settingsRoutes from './routes/settings.js'
+import shopifyRoutes from './routes/shopify.js'
+import shopifyWebhookRoutes from './routes/shopify-webhooks.js'
 
 // Load environment variables
 dotenv.config()
@@ -91,6 +93,8 @@ app.use('/api/analytics', analyticsRoutes)
 app.use('/api/v1/analytics', analyticsV1Routes)
 app.use('/api/webhooks', webhookRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/integrations/shopify', shopifyRoutes)
+app.use('/api/webhooks/shopify', shopifyWebhookRoutes)
 
 // ============================================================================
 // ERROR HANDLING

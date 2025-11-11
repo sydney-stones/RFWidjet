@@ -98,6 +98,7 @@ model Merchant {
   usageTracking      UsageTracking[]
   analyticsEvents    AnalyticsEvent[]
   widgetSettings     WidgetSettings?
+  integrations       MerchantIntegration[]
 
   @@map("merchants")
   @@index([apiKey])
@@ -290,6 +291,43 @@ model WidgetSettings {
 
   @@map("widget_settings")
   @@index([merchantId])
+}
+
+model MerchantIntegration {
+  id                String   @id @default(cuid())
+  merchantId        String
+
+  // Platform details
+  platform          String // "shopify", "woocommerce", "magento", etc.
+  shopDomain        String // e.g., "mystore.myshopify.com"
+
+  // OAuth credentials
+  accessToken       String // Encrypted access token
+  scope             String? // OAuth scopes granted
+
+  // Integration status
+  isActive          Boolean  @default(true)
+  lastSyncAt        DateTime?
+
+  // Script tag tracking
+  scriptTagId       String? // Shopify script tag ID for auto-injection
+
+  // Webhook tracking
+  webhookIds        Json? // Array of registered webhook IDs
+
+  // Metadata
+  platformData      Json? // Platform-specific data
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  merchant          Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, platform])
+  @@map("merchant_integrations")
+  @@index([merchantId])
+  @@index([platform])
+  @@index([shopDomain])
 }
 
 // ============================================================================
