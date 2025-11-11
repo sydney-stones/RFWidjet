@@ -15,6 +15,7 @@ import productRoutes from './routes/products.js'
 import analyticsRoutes from './routes/analytics.js'
 import analyticsV1Routes from './routes/analytics-v1.js'
 import webhookRoutes from './routes/webhooks.js'
+import settingsRoutes from './routes/settings.js'
 
 // Load environment variables
 dotenv.config()
@@ -89,6 +90,7 @@ app.use('/api/products', productRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/v1/analytics', analyticsV1Routes)
 app.use('/api/webhooks', webhookRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // ============================================================================
 // ERROR HANDLING

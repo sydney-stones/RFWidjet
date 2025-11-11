@@ -97,6 +97,7 @@ model Merchant {
   tryOns             TryOn[]
   usageTracking      UsageTracking[]
   analyticsEvents    AnalyticsEvent[]
+  widgetSettings     WidgetSettings?
 
   @@map("merchants")
   @@index([apiKey])
@@ -263,6 +264,32 @@ model AnalyticsEvent {
   @@index([merchantId, eventType])
   @@index([merchantId, timestamp])
   @@index([timestamp])
+}
+
+model WidgetSettings {
+  id                      String   @id @default(cuid())
+  merchantId              String   @unique
+
+  // Button customization
+  buttonText              String   @default("👗 Try On Me")
+  buttonColor             String   @default("#00C896")
+  buttonPosition          String   @default("below-add-to-cart") // below-add-to-cart, floating, custom
+  customCssSelector       String?
+
+  // Features
+  requireEmail            Boolean  @default(false)
+  showCompleteLook        Boolean  @default(true)
+  enableSizeRecommendations Boolean @default(true)
+
+  // Metadata
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  // Relations
+  merchant                Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@map("widget_settings")
+  @@index([merchantId])
 }
 
 // ============================================================================
