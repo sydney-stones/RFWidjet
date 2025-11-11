@@ -93,7 +93,13 @@ class RenderedFitsWidget {
    * Open the try-on modal
    */
   private openModal(): void {
-    if (!this.config) return
+    if (!this.config || !this.apiClient) return
+
+    // Track button click event
+    this.apiClient.trackEvent({
+      eventType: 'button_clicked',
+      productId: this.config.productId
+    }).catch(() => {})
 
     this.modal = new TryOnModal(() => this.closeModal(), {
       productName: this.config.productId
@@ -133,6 +139,18 @@ class RenderedFitsWidget {
    * Handle photo upload
    */
   private async handlePhotoUpload(file: File, dataUrl: string): Promise<void> {
+    if (!this.apiClient || !this.config) return
+
+    // Track upload started event
+    this.apiClient.trackEvent({
+      eventType: 'upload_started',
+      productId: this.config.productId,
+      metadata: {
+        fileSize: file.size,
+        fileType: file.type
+      }
+    }).catch(() => {})
+
     // Validate file
     const fileValidation = Validator.validateImageFile(file)
     if (!fileValidation.valid) {
@@ -280,36 +298,35 @@ class RenderedFitsWidget {
     this.showLoadingView()
 
     try {
+      console.log('[RenderedFits] Starting try-on generation...')
+
       // Get customer ID from storage
       const customerId = Storage.getCustomerId()
 
-      // Make API request
-      const response = await this.apiClient.generateTryOn({
-        customerId: customerId || undefined,
-        customerPhoto: this.currentPhotoDataUrl,
-        productId: this.config.productId,
-        options: {
-          quality: 'standard',
-          saveToProfile: true
-        }
-      })
+      // Call the new generateTryon method (with correct signature)
+      const result = await this.apiClient.generateTryon(
+        this.currentPhotoDataUrl,
+        this.config.productId
+      )
+
+      console.log('[RenderedFits] Try-on generated successfully:', result)
 
       // Save customer ID if new
-      if (response.metadata?.customerId && !customerId) {
-        Storage.saveCustomerId(response.metadata.customerId)
+      if (result.metadata?.customerId && !customerId) {
+        Storage.saveCustomerId(result.metadata.customerId)
       }
 
       // Show result
       this.showResultView({
-        imageUrl: response.imageUrl,
-        recommendedSize: response.recommendedSize,
-        processingTimeMs: response.processingTimeMs,
-        productName: response.metadata?.productName
+        imageUrl: result.imageUrl,
+        recommendedSize: result.recommendedSize,
+        processingTimeMs: result.processingTimeMs,
+        productName: result.metadata?.productName
       })
 
       // Call success callback
       if (this.config.onSuccess) {
-        this.config.onSuccess(response)
+        this.config.onSuccess(result)
       }
     } catch (error) {
       console.error('[RenderedFits] Try-on generation failed:', error)
@@ -318,8 +335,27 @@ class RenderedFitsWidget {
 
       if (error instanceof ApiError) {
         errorMessage = error.getUserMessage()
+
+        // Track error event
+        this.apiClient?.trackEvent({
+          eventType: 'error_occurred',
+          productId: this.config.productId,
+          errorMessage: errorMessage,
+          metadata: {
+            status: error.status,
+            isRateLimit: error.isRateLimitError(),
+            isAuth: error.isAuthError()
+          }
+        }).catch(() => {})
       } else if (error instanceof Error) {
         errorMessage = error.message
+
+        // Track generic error
+        this.apiClient?.trackEvent({
+          eventType: 'error_occurred',
+          productId: this.config.productId,
+          errorMessage: errorMessage
+        }).catch(() => {})
       }
 
       this.showError(errorMessage)
@@ -350,10 +386,19 @@ class RenderedFitsWidget {
    * Show result view
    */
   private showResultView(data: any): void {
-    if (!this.modal) return
+    if (!this.modal || !this.apiClient || !this.config) return
 
     this.resultComponent = new ResultComponent(data, {
       onAddToCart: () => {
+        // Track add to cart event
+        this.apiClient?.trackEvent({
+          eventType: 'add_to_cart_clicked',
+          productId: this.config?.productId,
+          metadata: {
+            recommendedSize: data.recommendedSize
+          }
+        }).catch(() => {})
+
         if (this.config?.onAddToCart) {
           this.config.onAddToCart()
         } else {
