@@ -13,6 +13,7 @@ import tryonRoutes from './routes/tryons.js'
 import tryonV1Routes from './routes/tryons-v1.js'
 import productRoutes from './routes/products.js'
 import analyticsRoutes from './routes/analytics.js'
+import analyticsV1Routes from './routes/analytics-v1.js'
 import webhookRoutes from './routes/webhooks.js'
 
 // Load environment variables
@@ -86,6 +87,7 @@ app.use('/api/tryons', tryonRoutes)
 app.use('/api/v1/tryons', tryonV1Routes)
 app.use('/api/products', productRoutes)
 app.use('/api/analytics', analyticsRoutes)
+app.use('/api/v1/analytics', analyticsV1Routes)
 app.use('/api/webhooks', webhookRoutes)
 
 // ============================================================================
